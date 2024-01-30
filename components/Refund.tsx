@@ -3,12 +3,12 @@
 // ChakraUI
 import { Flex, Text, Input, Button, Heading, useToast } from "@chakra-ui/react"
 
-// React
+// ReactJS
 import { useState } from "react"
 
 // Constants and Types
 import { contractAddress, abi } from "@/constants"
-import { ContributeProps } from "@/types"
+import { RefundProps } from "@/types"
 
 // Viem
 import { parseEther } from "viem"
@@ -16,20 +16,16 @@ import { parseEther } from "viem"
 // Wagmi
 import { prepareWriteContract, writeContract, waitForTransaction } from '@wagmi/core'
 
-export const Contribute = ({ getData }: ContributeProps) => {
+export const Refund = ({ getData, end, goal, totalCollected }: RefundProps) => {
 
     const toast = useToast()
-    
-    const [amount, setAmount] = useState<string>('')
 
-    const contribute = async() => {
+    const refund = async() => {
         try {
-            let money = parseEther(amount);
             const { request } = await prepareWriteContract({
                 address: contractAddress,
                 abi: abi,
-                functionName: 'contribute',
-                value: money
+                functionName: 'refund'
             })
             const { hash } = await writeContract(request)
             const data = await waitForTransaction({
@@ -38,7 +34,7 @@ export const Contribute = ({ getData }: ContributeProps) => {
             await getData()
             toast({
                 title: 'Congratulations',
-                description: "Your contribution has been added.",
+                description: "You have been refunded.",
                 status: 'success',
                 duration: 4000,
                 isClosable: true,
@@ -57,20 +53,20 @@ export const Contribute = ({ getData }: ContributeProps) => {
 
     return (
         <>
-            <Heading mt='2rem'>Contribute</Heading>
+            <Heading mt='2rem'>Refund</Heading>
             <Flex mt="1rem">
-                <Input 
-                    placeholder='Your amount in ETH' 
-                    size='lg'
-                    value={amount}
-                    onChange={(e) => setAmount(e.target.value)}  />
-                <Button 
-                    colorScheme='purple' 
-                    size='lg'
-                    onClick={() => contribute()}
-                >
-                    Contribute
-                </Button>
+                {totalCollected < goal && Math.floor(Date.now() / 1000) > parseInt(end) ? (
+                    <Button 
+                        colorScheme='red' 
+                        size='lg'
+                        width="100%"
+                        onClick={() => refund()}
+                    >
+                        Refund
+                    </Button>
+                ) : (
+                    <Text color='red'>No refund available right now.</Text>
+                )}
             </Flex>
         </>
     )
